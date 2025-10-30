@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register Student</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 1rem;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+        }
+        .title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+        .subtitle {
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-bottom: 2rem;
+        }
+        .form-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+        .input-field {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            outline: none;
+        }
+        .input-field:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+        .register-button {
+            width: 100%;
+            padding: 1rem;
+            background-color: #6366f1;
+            color: white;
+            font-weight: 600;
+            border: none;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        }
+        .register-button:hover {
+            background-color: #4f46e5;
+            transform: translateY(-2px);
+        }
+        .status-message {
+            margin-top: 1.5rem;
+            font-weight: 600;
+            display: none;
+        }
+        .status-success {
+            color: #10b981;
+        }
+        .status-error {
+            color: #ef4444;
+        }
+        .status-loading {
+            color: #6366f1;
+        }
+        @media (max-width: 480px) {
+            .container {
+                padding: 1.5rem;
+            }
+            .title {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">Register a New Student</h1>
+        <p class="subtitle">Enter the student's name and registration number to begin.</p>
+        
+        <form id="register-form" class="form-section">
+            <input type="text" id="studentName" name="name" placeholder="Student's Name" required class="input-field">
+            <input type="text" id="regdNo" name="regdNo" placeholder="Regd. No" required class="input-field">
+            <button type="submit" class="register-button">Register Student</button>
+        </form>
+        
+        <div id="statusMessage" class="status-message"></div>
+    </div>
+    
+    <script>
+        document.getElementById('register-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const studentName = document.getElementById('studentName').value;
+            const regdNo = document.getElementById('regdNo').value;
+            const statusMessage = document.getElementById('statusMessage');
+
+            statusMessage.style.display = 'block';
+            statusMessage.textContent = 'Registering student...';
+            statusMessage.className = 'status-message status-loading';
+
+            try {
+                const response = await fetch('/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `name=${encodeURIComponent(studentName)}&regdNo=${encodeURIComponent(regdNo)}`
+                });
+
+                const text = await response.text();
+
+                if (response.ok) {
+                    statusMessage.textContent = `Success: ${studentName} (${regdNo}) registered.`;
+                    statusMessage.className = 'status-message status-success';
+                    document.getElementById('studentName').value = '';
+                    document.getElementById('regdNo').value = '';
+                } else {
+                    statusMessage.textContent = `Error: ${text}`;
+                    statusMessage.className = 'status-message status-error';
+                }
+            } catch (error) {
+                statusMessage.textContent = `An error occurred. Please try again.`;
+                statusMessage.className = 'status-message status-error';
+                console.error('Error:', error);
+            }
+        });
+    </script>
+</body>
+</html>

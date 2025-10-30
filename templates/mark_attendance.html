@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mark Attendance</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 1rem;
+            flex-direction: column;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+        }
+        .title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+        .subtitle {
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-bottom: 2rem;
+        }
+        #subject-select-container,
+        #status-container {
+            margin-bottom: 2rem;
+        }
+        #subject-select {
+            padding: 0.75rem 1rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+        }
+        #start-attendance-btn {
+            background-image: linear-gradient(to right, #10b981, #34d399);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+            border: none;
+        }
+        #start-attendance-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+            background-image: linear-gradient(to right, #059669, #10b981);
+        }
+        #video-feed {
+            width: 100%;
+            border-radius: 1rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+        .status-message {
+            margin-top: 1rem;
+            font-weight: 600;
+        }
+        .status-success { color: #10b981; }
+        .status-error { color: #ef4444; }
+        .status-loading { color: #6366f1; }
+
+        .back-button {
+            margin-top: 2rem;
+            display: inline-block;
+            background-color: #64748b;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            text-decoration: none;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+        .back-button:hover {
+            background-color: #475569;
+        }
+        @media (max-width: 480px) {
+            .container {
+                padding: 1.5rem;
+            }
+            .title {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">Mark Attendance</h1>
+        <p class="subtitle">Select a subject and click "Start" to begin marking attendance.</p>
+        
+        <div id="subject-select-container">
+            <select id="subject-select">
+                <option value="math">Mathematics</option>
+                <option value="science">Science</option>
+                <option value="history">History</option>
+            </select>
+            <button id="start-attendance-btn">Start Attendance</button>
+        </div>
+        
+        <div id="status-container">
+            <p id="status-message" class="status-message"></p>
+        </div>
+        
+        <img id="video-feed" src="" alt="Webcam Feed">
+
+        <a href="/" class="back-button">Back to Home</a>
+    </div>
+
+    <script>
+        document.getElementById('start-attendance-btn').addEventListener('click', async function() {
+            const subject = document.getElementById('subject-select').value;
+            const statusMessage = document.getElementById('status-message');
+            const videoFeed = document.getElementById('video-feed');
+
+            statusMessage.textContent = 'Checking location...';
+            statusMessage.className = 'status-message status-loading';
+
+            if (!navigator.geolocation) {
+                statusMessage.textContent = 'Geolocation is not supported by your browser.';
+                statusMessage.className = 'status-message status-error';
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(async (position) => {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+
+                try {
+                    const response = await fetch('/attendance', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ subject: subject, lat: lat, lon: lon })
+                    });
+
+                    const result = await response.json();
+                    
+                    if (response.ok) {
+                        statusMessage.textContent = 'Location verified. Starting webcam...';
+                        statusMessage.className = 'status-message status-success';
+                        
+                        videoFeed.src = `/video_feed/${subject}`;
+                        videoFeed.style.display = 'block';
+                    } else {
+                        statusMessage.textContent = `Error: ${result.error}`;
+                        statusMessage.className = 'status-message status-error';
+                    }
+                } catch (error) {
+                    statusMessage.textContent = 'An error occurred. Please try again.';
+                    statusMessage.className = 'status-message status-error';
+                    console.error('Error:', error);
+                }
+            }, (error) => {
+                statusMessage.textContent = 'Could not get location. Please enable location services.';
+                statusMessage.className = 'status-message status-error';
+                console.error('Geolocation Error:', error);
+            });
+        });
+    </script>
+</body>
+</html>
